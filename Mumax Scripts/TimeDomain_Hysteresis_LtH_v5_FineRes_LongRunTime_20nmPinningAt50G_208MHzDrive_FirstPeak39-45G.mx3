@@ -1,0 +1,186 @@
+//.....Geometry.....//
+
+SetGridsize(512, 512, 1)
+SetCellsize(1454e-9/512, 1346e-9/512, 40e-9)
+
+//EdgeSmooth = 10
+a1 := Ellipse(1454e-9, 1498e-9)
+//a1 := Ellipse(1319e-9, 1319e-9)
+d1 := Rect(1108.191e-9, 185.830e-9).transl(0,-679.579e-9,0)
+d2 := Rect(78.974e-9, 78.974e-9).transl(179.529e-9,-586.664e-9,0)
+d3 := Rect(145.527e-9, 369.397e-9).transl(252.298e-9,-444.688e-9,0)
+d4 := Rect(492.529e-9, 414.172e-9).transl(471.203e-9,-421.662e-9,0)
+d5 := Ellipse(90.820e-9, 90.820e-9).transl(224.945e-9,-259.986e-9,0)
+d6 := Ellipse(394.869e-9, 394.869e-9).transl(883.192e-9,97.312e-9,0)
+d7 := Ellipse(90.820e-9, 90.820e-9).transl(224.945e-9,462.652e-9,0)
+d8 := Rect(145.527e-9, 394.869e-9).transl(252.298e-9,660.097e-9,0)
+d9 := Rect(492.529e-9, 414.172e-9).transl(471.203e-9,624.328e-9,0)
+c1 := Ellipse(78.974e-9, 78.974e-9).transl(140.048e-9,-547.178e-9,0)
+
+blk1:= Rect(792.102e-9, 1312.456e-9).transl(-216.515e-9,69.564e-9,0)
+blk2:= Rect(517.153e-9, 631.826e-9).transl(438.112e-9,101.329e-9,0)
+
+d := d1.add(d2.add(d3.add(d4.add(d5.add(d6.add(d7.add(d8.add(d9))))))))
+a2 := a1.sub(d)
+a := a2.add(c1)
+blk := blk1.add(blk2)
+
+setgeom(a.transl(0,-75.915e-9,0)) 
+
+//setgeom(a) 
+saveas(geom, "ShroomSaturation_01")
+
+//.....Input parameters.....//
+
+Msat = 767e3				// Saturation magnetization in A/m; all the regions
+Aex = 11.65e-12				// Exchange stiffness in J/m
+alpha = 0.01					// Gilbert damping constant
+
+
+
+pin_x := -173.23e-9
+pin_y := -162.99e-9	
+pin_diam := 20e-9
+k:= 0.8
+MS := 767e3
+pin := Circle(pin_diam)
+defregion(111,pin.transl(pin_x,pin_y,0))
+Msat.SetRegion(111,(k*MS))
+
+
+//fixdt=0
+//setsolver(5)
+
+//.....Initial conditions.....//
+
+m = Uniform(1, 0, 0)  
+//saveas(m, "Shroom_uniformX")
+/*
+file := sprintf("m%06d.ovf", 300)
+print(file)
+m.loadFile(file)
+save(Msat)
+*/
+//EdgeSmooth = 10
+
+
+
+
+//m.loadfile("m125Oe.ovf")
+//saveas(m, "loadfile")
+
+
+/*.....Tabular output (along with t and m).....*/
+saveas(m, "m_init")
+tableadd(B_ext)
+tableadd(B_anis)
+tableadd(B_demag)
+tableadd(B_eff)
+tableadd(B_exch)
+tableadd(B_therm)
+
+tableadd(E_total)
+tableadd(E_anis)
+tableadd(E_demag)
+tableadd(E_exch)
+tableadd(E_therm)
+tableadd(E_Zeeman)
+
+tableadd(LLtorque)
+tableadd(maxTorque)
+tableadd(torque)
+/*tableadd(E_demag)
+tableadd(B_demag)*/
+/*RelaxTorqueThreshold = 5e-4;*/
+/*................................hysteresis.............................*/
+
+/*.....Full.....*/
+
+
+/*
+for Bi:=630; Bi >=-99; Bi-=1{
+
+	Bx := Bi*1e-4
+	By := (((2.7413e-8)*pow(Bi, 3)) - ((3.3823e-5)*pow(Bi, 2)) + ((4.1254e-2)*Bi) - 1.2602)*1e-4
+	Bz := (((-1.3810e-8)*pow(Bi, 3)) + ((3.3849e-5)*pow(Bi, 2)) - ((4.5407e-2)*Bi) + 1.1287)*1e-4
+	//By := 0
+	//Bz := 0
+	B_ext = vector(Bx, By, Bz)
+
+	print(Bi*1e-4)
+	relax()      
+	tablesave()
+	save(m)
+	snapshot(m)
+	
+}*/
+/*
+for Bi:=-100; Bi <=630; Bi+=1{
+
+	Bx := Bi*1e-4
+	By := (((2.7413e-8)*pow(Bi, 3)) - ((3.3823e-5)*pow(Bi, 2)) + ((4.1254e-2)*Bi) - 1.2602)*1e-4
+	Bz := (((-1.3810e-8)*pow(Bi, 3)) + ((3.3849e-5)*pow(Bi, 2)) - ((4.5407e-2)*Bi) + 1.1287)*1e-4
+	//By := 0
+	//Bz := 0
+	B_ext = vector(Bx, By, Bz)
+
+	print(Bi*1e-4)
+	relax()      
+	tablesave()
+	save(m)
+	snapshot(m)
+	
+}
+*/
+
+Bstart := 0 //starting field (T)
+//tableautosave(10e-12)
+//for i := 379; i <= 439; i += 2 { 
+f:=208e6
+//i:=70
+Bs := 3900
+for i:=80; i<=200; i+=1{
+	//i:=70
+    file := sprintf("m%06d.ovf", i)
+	print(file)
+    m.loadFile(file)
+	//print(Bi)
+//for Bs:=3500; Bs<=7000; Bs+=5{
+	//Bi := i
+	//Bi := Bs/100
+	Bi := Bs/100
+	print(Bi)
+	Bx := Bi*1e-4
+	By := (((2.7413e-8)*pow(Bi, 3)) - ((3.3823e-5)*pow(Bi, 2)) + ((4.1254e-2)*Bi) - 1.2602)*1e-4
+	Bz := (((-1.3810e-8)*pow(Bi, 3)) + ((3.3849e-5)*pow(Bi, 2)) - ((4.5407e-2)*Bi) + 1.1287)*1e-4
+	//By := 0
+	//Bz := 0
+	print(Bi)
+	
+	B_ext = vector(Bx, By, Bz)
+	//relax()
+	//save(m)
+	//snapshot(m)
+	//t=0 // time zero
+	B_ext = vector(Bx, By+.0001*sin(2*pi*f*t),Bz)
+	tableautosave(10e-12)
+	fixdt=2.5e-13
+	run(144.23e-9)
+	Bs += 5
+	//B_ext = vector(Bx,By,Bz)
+	//relax()
+}
+	//relax()
+
+//autosave(m,0.1e-9)
+//AutoSnapshot(m, 800e-12)
+//fixdt = 2.5e-13
+//tableautosave(10e-12)
+//Run(50e-9)    // relax time (s)
+
+
+//Bstart -= 3 //field counter
+
+
+
+

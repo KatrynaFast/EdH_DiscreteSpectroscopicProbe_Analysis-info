@@ -1,0 +1,187 @@
+//PyShroom with no edgesmoothing
+//No voronoi pattern
+//Bz stray field to facilitate vortex formation
+
+// Temp soak after Bx field steps (do a 2 stage soak) 
+// After Bx step: Temp=250 soak for 2ns, followed by 0K relax(), followed by Temp=150 soak for 1 ns, followed by 0K relax(); After angle step Temp=150 soak for 500 ps before Temp=0 relax()
+// Bx from 500G to -125G, then back to 500G with 1G steps
+// By steps 0, +0.5G, +1G, +0.5G, 0G, -0.5G, -1G, -0.5G, 0G 
+// Bz steps at 0G, +1G, 0G, -1G, 0G
+
+// for temp soak: alpha =0.5, Temp=300, fixdt=0, setsolver(5), tempsoakruntime=1e-9 */
+// set Temp= 0 before each relax() */
+// Only use temp soak on angle sweeps for first sweep set (i.e. 0 mrad to max mrad)
+
+
+//.....Geometry.....//
+cs := 64
+SetGridsize(cs, cs, 1)
+SetCellsize(1454e-9/cs, 1346e-9/cs, 40e-9)
+
+//EdgeSmooth = 10
+a1 := Ellipse(1454e-9, 1498e-9)
+//a1 := Ellipse(1319e-9, 1319e-9)
+d1 := Rect(1108.191e-9, 185.830e-9).transl(0,-679.579e-9,0)
+d2 := Rect(78.974e-9, 78.974e-9).transl(179.529e-9,-586.664e-9,0)
+d3 := Rect(145.527e-9, 369.397e-9).transl(252.298e-9,-444.688e-9,0)
+d4 := Rect(492.529e-9, 414.172e-9).transl(471.203e-9,-421.662e-9,0)
+d5 := Ellipse(90.820e-9, 90.820e-9).transl(224.945e-9,-259.986e-9,0)
+d6 := Ellipse(394.869e-9, 394.869e-9).transl(883.192e-9,97.312e-9,0)
+d7 := Ellipse(90.820e-9, 90.820e-9).transl(224.945e-9,462.652e-9,0)
+d8 := Rect(145.527e-9, 394.869e-9).transl(252.298e-9,660.097e-9,0)
+d9 := Rect(492.529e-9, 414.172e-9).transl(471.203e-9,624.328e-9,0)
+c1 := Ellipse(78.974e-9, 78.974e-9).transl(140.048e-9,-547.178e-9,0)
+
+blk1:= Rect(792.102e-9, 1312.456e-9).transl(-216.515e-9,69.564e-9,0)
+blk2:= Rect(517.153e-9, 631.826e-9).transl(438.112e-9,101.329e-9,0)
+
+d := d1.add(d2.add(d3.add(d4.add(d5.add(d6.add(d7.add(d8.add(d9))))))))
+a2 := a1.sub(d)
+a := a2.add(c1)
+blk := blk1.add(blk2)
+
+setgeom(a.transl(0,-75.915e-9,0)) 
+
+//defregion(1, Rect(10e-9,150e-9).transl(-165e-9,85e-9,0))
+
+saveas(geom, "PyShroom")
+
+/*
+grainSize  := 40e-9  // m
+randomSeed := 1234567	//This keeps structure the same between scans - no need to load regions or Msat (loading Msat isn't possible anyway).
+maxRegion  := 255
+
+ext_makegrains(grainSize, maxRegion, randomSeed)
+
+defregion(256, blk.transl(0,-75.915e-9,0).inverse()) //
+*/
+
+//.....Input parameters.....//
+
+Msat = 767e3				// Saturation magnetization in A/m; all the regions
+//Msat.setregion(1, 767e3)
+Aex = 11.65e-12				// Exchange stiffness in J/m
+alpha = 0.1						// Gilbert damping constant
+
+
+/*		
+//		Initialize new regions, and Msat variation - consistent with consistent randomseed
+for i:=0; i < maxRegion ; i++{
+MS := 767e3
+Msat.SetRegion(i ,0.975*MS + randNorm() * 0.05* MS) // 5% variation of MS
+}
+*/
+
+//regions.loadfile("./Magnetization_State_Files/regions_PyBlockShroom_voronoi_40nm.ovf") 	//loading predefined regions
+//Msat.loadfile("./Magnetization_State_Files/Msat_PyBlockShroom_voronoi_40nm.ovf")		//loading predefinced Msat 
+
+
+m = Uniform(1, 0, 0)  
+saveas(m, "m_uniform")
+
+/* 
+m = Vortex(1,1).transl(-149e-9, -3e-9, 0).transl(0,-75.915e-9,0).Add(1,Vortex(-1,-1).transl(457e-9, 116e-9, 0).transl(0,-75.915e-9,0))
+//m = Vortex(-1,1).transl(455e-9, 145e-9, 0) //single vortex
+saveas(m, "PyShroom_2vortex_guess_1")
+ */
+//m.loadfile("./Magnetization_State_Files/2vortex_0Bswept_1.ovf")
+//saveas(m, "m_2vortexNoVoronoi_0G_1")
+//saveas(regions, "regions_PyBlockShroom_Novoronoi_40nm")
+//saveas(Msat, "Msat_PyBlockShroom_Novoronoi_40nm")	
+save(Msat)
+
+
+//.....Tabular output (along with t and m).....//
+
+tauz:=Add(Mul(m.Comp(0),B_ext.Comp(1)),Mul(Const(-1),Mul(m.Comp(1),B_ext.Comp(0))))
+taux:=Add(Mul(m.Comp(1),B_ext.Comp(2)),Mul(Const(-1),Mul(m.Comp(2),B_ext.Comp(1))))
+tauy:=Add(Mul(m.Comp(2),B_ext.Comp(0)),Mul(Const(-1),Mul(m.Comp(0),B_ext.Comp(2))))
+//Btot:=Pow(Add(Add(Pow(B_ext.Comp(0),Const(2)),Pow(B_ext.Comp(1),Const(2))),Pow(B_ext.Comp(2),Const(2))),Const(0.5))
+Btot:=Dot(B_ext,B_ext)
+B_y:=B_ext.Comp(1)
+B_x:=B_ext.Comp(0)
+B_z:=B_ext.Comp(2)
+
+tableadd(B_ext)
+tableadd(B_anis)
+tableadd(B_demag)
+tableadd(B_eff)
+tableadd(B_exch)
+tableadd(B_therm)
+
+tableadd(E_total)
+tableadd(E_anis)
+tableadd(E_demag)
+tableadd(E_exch)
+tableadd(E_therm)
+tableadd(E_Zeeman)
+
+tableadd(LLtorque)
+tableadd(maxTorque)
+tableadd(torque)
+tableadd(tauz)
+tableadd(tauy)
+tableadd(taux)
+
+//RelaxTorqueThreshold = 5e-4
+
+//................................hysteresis.............................//
+
+timestep := 0.05e-12
+savestep := 1e-9
+setsolver(4)
+t_final := 2.5e-6 //run for 3 us 
+
+Bi_initial := 60*4*pi
+Bi_high := 60*4*pi 	//Gauss, first save point
+//Bi_high2 := 500	//Gauss, highest field
+Bi_low := 10*4*pi	//Gauss, lowest field
+Bi_step := 1.0
+
+B_1 := 16.6*4*pi
+B_2 := 16.2*4*pi
+
+Brate := 1e-4*(-45*4*pi)/t_final
+Brate2 := Brate/10
+//Brate := -1e-4*4*pi*15
+
+t_p1 := 1e-4*(B_1 - Bi_high)/Brate
+t_p2 := 1e-4*(B_2 - B_1)/Brate2
+t_p3 := 1e-4*(Bi_low - B_2)/Brate
+
+
+
+freq := 208e6 // 208 MHz frequency
+
+BxDC := Bi_high*1e-4
+ByDC := 0
+BzDC := 0
+
+BxRF := 0
+ByRF := 10*4*pi*1e-7
+BzRF := 0
+
+Bf1 := BxDC + Brate*t_p1
+Bf2 := Bf1 + Brate2*t_p2
+
+B_ext = vector(Bi_initial*1e-4,0,0)
+relax()
+
+fixdt = timestep
+tableautosave(25e-12)
+/*
+autosave(m.Comp(0),1e-9)
+autosave(m.Comp(1),1e-9)
+autosave(m.Comp(2),1e-9)
+*/
+B_ext = vector(BxDC+Brate*t,ByRF*sin(2*pi*freq*t),BzRF)
+
+run(t_p1)
+
+B_ext = vector(Bf1+Brate2*(t-t_p1),ByRF*sin(2*pi*freq*t),BzRF)
+run(t_p2)
+
+B_ext = vector(Bf2+Brate*(t-(t_p1 + t_p2)),ByRF*sin(2*pi*freq*t),BzRF)
+run(t_p3)
+
+ 
