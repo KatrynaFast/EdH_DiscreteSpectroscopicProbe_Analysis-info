@@ -54,37 +54,15 @@ g = 2
 AEdH = 1e18*2*m_e*Ms*V/(e*g)
 AmxB = 1e18*Ms*V*1e-4 #1e-4 to account for conversion of G to T
 
-# path = 'D:/Katryna/PyShroom/DC Hysteresis/TimeDomain_Hysteresis_LtH_v4_20nmPinningAt50G_1Gydrive_208MHz.out/table.txt'
-# path = 'D:/Katryna/PyShroom/DC Hysteresis/Hysteresis_LtH_w20nmPinningAt50G_0p8Ms.out/TimeDomain_Hysteresis_LtH_v6_LongDuration_20nmPinningAt50G_1Gydrive_230MHz.out/table.txt'
-# path = r'D:/Katryna/PyShroom/DC Hysteresis/Hysteresis_LtH_w20nmPinningAt50Gand28G_0p8Ms.out/TimeDomain_Hysteresis_LtH_v3_20nmPinningAt50Gand28G_1Gydrive_208MHz.out/'
-
-# path = r'D:/Katryna/PyShroom/DC Hysteresis/HightoLowsim_states_noByBz_KRF.out/TimeDomain_Hysteresis_HtL_HighField_macrospinCompare_1Gydrive_208MHz.out/'
-# tab = pd.read_csv(path+'table.txt',delimiter='\t')
-
-
-# path = 'D:/Katryna/PyShroom/DC Hysteresis/HightoLowsim_states_noByBz_KRF.out/TimeDomain_Hysteresis_HtL_1Gydrive_230MHz_alpha0p008.out/'
-# path = 'D:/Katryna/PyShroom/DC Hysteresis/HightoLowsim_states_noByBz_KRF.out/TimeDomain_Hysteresis_HtL_HighField_macrospinCompare_1Gydrive_114MHz.out/'
-path = 'D:/Katryna/PyShroom/DC Hysteresis/HightoLowsim_states_noByBz_KRF.out/TimeDomain_Hysteresis_HtL_HighField_macrospinCompare_1Gydrive_218MHz_377-150G.out/'
-# path = 'D:/Katryna/PyShroom/DC Hysteresis/Hysteresis_LtH_w20nmPinningAt50Gand28G_0p8Ms_From0G.out/TimeDomain_Hysteresis_LtH_20nmPinningAt50Gand28G_1Gydrive_230MHz_alpha0p008_From0G.out/'
-# path = 'D:/Katryna/PyShroom/DC Hysteresis/Hysteresis_LtH_w20nmPinningAt50Gand28G_0p8Ms.out/TimeDomain_Hysteresis_LtH_v3_20nmPinningAt50Gand28G_1Gydrive_208MHz_alpha0p008.out/'
-# path = 'D:/Katryna/PyShroom/DC Hysteresis/Hysteresis_LtH_w20nmPinningAt50Gand28G_0p8Ms.out/TimeDomain_Hysteresis_LtH_20nmPinningAt50Gand28G_1Gydrive_230MHz.out/'
+path = '' #folder path for mumax simulation output 
 tab = pd.read_csv(path+'table.txt',delimiter='\t')
 savename = 'Processed-Torques_HighFields_218MHz_yDrive.csv'
-# ti = 14424
-# tiA = 10000
-# ti = 4808
-# tiA = 2000
-# ti = 13044
-# tiA = 8000
-# ti = 9616
-# tiA = 5000
-# ti = 17544//2 + 1
-# ti = 8696
-ti = 9175
-tiA=5000
 
+ti = 9175 #number of times saved for each DC field value 
+tiA=5000 #index at which to begin averaging (tiA:)
+
+## Parameters for lock-in filtering
 f0 = 218e6
-# f0 = 230e6
 fc = 0.3*f0
 dt = 10e-12
 FO = 4
@@ -93,9 +71,12 @@ m = tab[tab.columns[1:4]].to_numpy().T
 B = tab[tab.columns[4:7]].to_numpy().T*1e4
 t = tab[tab.columns[0]].to_numpy()
 
+#calculate torques from sim output
 mxb = AmxB*np.cross(m.T,B.T).T
 edh = AEdH*np.gradient(m,dt,axis=1)
 res = mxb + edh
+
+""" Lock-in filtering for m, and all torques"""
 
 Xmx,Ymx,Rmx,Tmx = lockIn(t,m[0],dt,f0,fc,FO,1)
 Xmy,Ymy,Rmy,Tmy = lockIn(t,m[1],dt,f0,fc,FO,1)
@@ -130,6 +111,7 @@ NB = np.unique(B[0]).size
 BxDC = np.unique(B[0])
 
 db = np.where(B[0]==BxDC[1])[0][0] - np.where(B[0]==BxDC[0])[0][0] #
+
 #if the field sweep is decreasing in magnitude, BxDC needs to be reversed
 if db<0:
     BxDC = BxDC[::-1]
@@ -144,12 +126,6 @@ TavE = []
 TavR = []
 
 for i in range(NB):
-    # if i==NB-1: #need to treat last one differently I think...
-    #     RTm = Rm[:,i*ti:]
-    #     RTX = RX[:,i*ti:]
-    #     RTE = RE[:,i*ti:]
-    # else:
-        
     #break up locked-in arrays into smaller arrays of each individual DC field
     RTm = Rm[:,i*ti:(i+1)*ti-1]
     RTX = RX[:,i*ti:(i+1)*ti-1]
@@ -173,13 +149,13 @@ for i in range(NB):
     TTE = TE[:,i*ti:(i+1)*ti-1]
     TTR = TR[:,i*ti:(i+1)*ti-1]
     
-    #take the "satuTated" point (wheTe the magnetization is settled)
+    #take the "saturated" point (where the magnetization is settled)
     Tmsat = TTm[:,tiA:]
     TXsat = TTX[:,tiA:]
     TEsat = TTE[:,tiA:]
     TRsat = TTR[:,tiA:]
     
-    #gTab the mean of the settled output
+    #grab the mean of the settled output
     Tavm.append(Tmsat.mean(axis=1))
     TavX.append(TXsat.mean(axis=1))
     TavE.append(TEsat.mean(axis=1))
@@ -222,47 +198,6 @@ df = pd.DataFrame({'DC Field (G)':BxDC,
                   'Phase (res_y) (rad)':TavR[1],
                   'Phase (res_z) (rad)':TavR[2]
                   })
-# csvSavePath = 'D:/Katryna/PyShroom/DC Hysteresis/Hysteresis_LtH_w20nmPinningAt50G_0p8Ms.out/TimeDomain_Hysteresis_LtH_v6_LongDuration_20nmPinningAt50G_1Gydrive_230MHz.out/'
-# csvSavePath = r'D:/Katryna/PyShroom/DC Hysteresis/Hysteresis_LtH_w20nmPinningAt50Gand28G_0p8Ms.out/TimeDomain_Hysteresis_LtH_v3_20nmPinningAt50Gand28G_1Gydrive_208MHz.out/'
-
-# csvSavePath = 'D:/Katryna/PyShroom/DC Hysteresis/HightoLowsim_states_noByBz_KRF.out/TimeDomain_Hysteresis_HtL_HighField_macrospinCompare_1Gydrive_208MHz.out/'
-# df.to_csv(path+'Processed-Torques_230MHz_Hysteresis_HtL_temp.csv',index=False)
 df.to_csv(path+savename,index=False)
 
 
-
-# df.to_csv(path+'Processed-Torques_230MHz_doublePinningAt50Gand28G.csv',index=False)
-# df.to_csv(path+'Processed-Torques_HighFields_208MHz_yDrive.csv',index=False)
-
-# pd.to_csv()
-
-plt.figure()
-plt.title('magnetization (y)')
-plt.plot(BxDC,Ravm[1])
-plt.xlabel('DC Field (G)')
-plt.ylabel('Magnitude')
-plt.twinx()
-plt.plot(BxDC,Tavm[1],'k-')
-plt.ylabel('Phase (rad)')
-
-plt.figure()
-plt.title(r'$\tau^{EdH}$ (y)')
-plt.plot(BxDC,RavE[1])
-plt.xlabel('DC Field (G)')
-plt.ylabel('Magnitude')
-plt.twinx()
-plt.plot(BxDC,TavE[1],'k-')
-plt.ylabel('Phase (rad)')
-
-plt.figure()
-plt.title(r'$\tau^{mxB}$ (y)')
-plt.plot(BxDC,RavX[1])
-plt.xlabel('DC Field (G)')
-plt.ylabel('Magnitude')
-plt.twinx()
-plt.plot(BxDC,np.unwrap(TavX[1]),'k-')
-plt.ylabel('Phase (rad)')
-plt.plot(t,m[1])
-
-# plt.twinx()
-# plt.plot(t,R,'k')

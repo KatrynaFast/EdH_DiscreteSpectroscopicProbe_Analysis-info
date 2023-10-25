@@ -1,15 +1,12 @@
 # AnalysisScripts
- Repository of analysis and simulation scripts used in DMSFD-EdH manuscript
-
- DOUBLE CHECK README IS ACCURATE BEFORE PUBLISHING
- DOUBLE CHECK CITATION FILE IS ACCURATE BEFORE PUBLISHING
- 
- 
- Files:
- lock-in-emulator_scriptCleanup.py
- 	details
+ Repository of analysis and simulation scripts used in "Einstein-de Haas torque as a discrete spectroscopic probe allows nanomechanical measurement of a magnetic resonance" (arXiv ID: ); [paper citation]
+  
+ Data Processing: python script to process hysteresis data
 	
-TorqueMixingSim_scriptCleanup.py
-	details
-	
+Macrospin: python scripts used in the macrospin model discussed in "Einstein-de Haas torque as a discrete spectroscopic probe allows nanomechanical measurement of a magnetic resonance" 
 
+
+ Mumax Post-Processing: python scripts used in the processing and analysis of Mumax3 simulation outputs
+ 
+ Mumax Scripts: scripts used for simulations using Mumax3 (A. Vansteenkiste, et al., AIP Adv. 4, 107133 (2014))
+ 
