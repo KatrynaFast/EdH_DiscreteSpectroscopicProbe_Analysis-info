@@ -2,22 +2,29 @@
 # Visit https://bit.ly/cffinit to generate yours today!
 
 cff-version: 1.2.0
-title: AnalysisScripts
+title: GitHub
 message: >-
-  If you use this software, please cite it using the
+  If you use this software, please cite it using the  
   metadata from this file.
 type: software
 authors:
   - given-names: Katryna
     family-names: Fast
+    email: kfast@ualberta.ca
+    affiliation: University of Alberta
   - given-names: Mark
     family-names: Freeman
+    email: freemanm@ualberta.ca
+    affiliation: University of Alberta
 identifiers:
   - type: url
-    value: 'https://github.com/KatrynaFast/MacrospinSimulation_Git'
-    description: >-
-      GitHub repository storing the relevant processing and
-      simulation scripts for the DMSFD-EdH manuscript
-repository-code: 'https://github.com/KatrynaFast/MacrospinSimulation_Git'
-commit: '1'
-date-released: '2023-08-23'
+    value: >-
+      https://github.com/KatrynaFast/EdH_DiscreteSpectroscopicProbe_Analysis-info
+repository-code: >-
+  https://github.com/KatrynaFast/EdH_DiscreteSpectroscopicProbe_Analysis-info
+abstract: >-
+  Path to github repository storing analysis information for
+  "Einstein-de Haas torque as a discrete spectroscopic probe
+  allows nanomechanical measurement of a magnetic resonance"
+  manuscript (K.R. Fast, J.E. Losby, G. Hajisalem, P.E.
+  Barclay, and M.R. Freeman, 2023)
